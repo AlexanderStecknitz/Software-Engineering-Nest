@@ -1,0 +1,10 @@
+{
+  "produktname": "Geänderttest",
+  "geschmack": "Ungarisch",
+  "typ": "KARTOFFEL",
+  "bestand": 10,
+  "preis": 11.1,
+  "rabatt": 0.011,
+  "lieferbar": true,
+  "schlagwoerter": ["UNGARISCH"]
+}

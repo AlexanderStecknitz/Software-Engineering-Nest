@@ -1,0 +1,23 @@
+{
+    "out": "extras/doc/api",
+    "entryPoints": ["src"],
+    "entryPointStrategy": "expand",
+    "excludePrivate": true,
+    "intentionallyNotExported": [
+      "DbConfig",
+      "ChipsIdVersion",
+      "Env",
+      "GraphQlConfig",
+      "JwtConfig",
+      "K8sConfig",
+      "NodeConfig",
+      "Links",
+      "CustomErrorMessages",
+      "Id",
+      "Login",
+      "LoginInput"
+    ],
+    "validation": {
+      "invalidLink": true
+    }
+}

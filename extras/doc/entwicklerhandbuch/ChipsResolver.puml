@@ -1,0 +1,104 @@
+' Copyright (C) 2019 - present Juergen Zimmermann, Hochschule Karlsruhe
+'
+' This program is free software: you can redistribute it and/or modify
+' it under the terms of the GNU General Public License as published by
+' the Free Software Foundation, either version 3 of the License, or
+' (at your option) any later version.
+'
+' This program is distributed in the hope that it will be useful,
+' but WITHOUT ANY WARRANTY; without even the implied warranty of
+' MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+' GNU General Public License for more details.
+'
+' You should have received a copy of the GNU General Public License
+' along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+' Preview durch <Alt>d
+
+@startuml Controller-Klasse
+
+interface Promise<T>
+
+package @nestjs/graphql {
+  class "function Resolver(): ClassDecorator" as Resolver
+  hide Resolver circle
+
+  class "function UseGuards(): ClassDecorator | MethodDecorator" as UseGuards
+  hide UseGuards circle
+
+  class "function UseInterceptors(): ClassDecorator | MethodDecorator" as UseInterceptors
+  hide UseInterceptors circle
+
+  class "function Query(): MethodDecorator" as Query
+  hide Query circle
+
+  class "function Mutation(): MethodDecorator" as Mutation
+  hide Mutation circle
+
+  class "function Args(): ParameterDecorator" as Args
+  hide Args circle
+
+  Resolver -[hidden]down-> UseGuards
+  UseGuards -[hidden]down-> UseInterceptors
+  UseInterceptors -[hidden]down-> Query
+  Query -[hidden]down-> Mutation
+  Mutation -[hidden]down-> Args
+}
+
+package security.auth {
+  enum Role {
+    ADMIN
+    MITARBEITER
+    ABTEILUNGSLEITER
+    KUNDE
+  }
+
+  class "const Roles = (...roles: Role[]) => SetMetadata()" as Roles
+  hide Roles circle
+
+  Roles ..> Role
+}
+
+package chips #DDDDDD {
+  package entity #FFFFFF {
+    class Chips <<entity>>
+  }
+
+  package service #FFFFFF {
+    class ChipsService << control >>
+  }
+
+  class "type ChipsDTO = Chips & { id?: string; version?: number; }" as ChipsDTO
+  hide ChipsDTO circle
+
+  ChipsResolver o-down-> "1" ChipsService : service
+  ChipsResolver ..> Chips
+
+  ChipsResolver .up.> Resolver
+  ChipsResolver .up.> UseGuards
+  ChipsResolver .up.> UseInterceptors
+  ChipsResolver .up.> Query
+  ChipsResolver .up.> Mutation
+  ChipsResolver .up.> Args
+
+  ChipsResolver .up.> Roles
+  ChipsResolver .up.> Role
+
+  ChipsResolver ..> ChipsDTO
+
+  ChipsResolver .up.> Promise
+
+  class ChipsResolver << control >> << @Resolver() >> << @UseGuards() >> << @UseInterceptors() >> {
+    + @Query async findById(@Args() id: string): Promise<ChipsDTO>
+    + @Query async find(@Args() titel: string |undefined): Promise<ChipsDTO[]>
+    + @Mutation @Roles() async create(@Args() chips: Chips): Promise<string>
+    + @Mutation @Roles() async update(@Args() chips: ChipsDTO): Promise<number>
+    + @Mutation @Roles() async delete(@Args() id: string): Promise<boolean>
+  }
+}
+
+hide empty members
+
+footer (c) Juergen Zimmermann
+
+@enduml

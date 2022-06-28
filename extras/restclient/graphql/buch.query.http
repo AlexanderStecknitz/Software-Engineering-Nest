@@ -1,0 +1,116 @@
+// Copyright (C) 2020 - present Juergen Zimmermann, Hochschule Karlsruhe
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+//
+// N e t z w e r k   -   V e r b i n d u n g   n o t w e n d i g
+//
+
+// siehe auch https://studio.apollographql.com/sandbox/explorer
+
+### Suche id, produktname, typ, bestand, preis, rabatt, lieferbar und schlagwoerter von allen ChipsProdukten
+POST {{graphQlUrl}}
+Content-Type: application/json
+X-REQUEST-TYPE: GraphQL
+
+{
+  chipsProdukte {
+    id
+    produktname
+    typ
+    bestand
+    preis
+    rabatt
+    lieferbar
+    schlagwoerter
+  }
+}
+
+### Suche Produktname und lieferbar von einem Chips mit vorhandener Chips-ID
+POST {{graphQlUrl}}
+Content-Type: application/json
+X-REQUEST-TYPE: GraphQL
+
+query ($id: ID! = "000000000000000000000001") {
+  chips(id: $id) {
+    produktname
+    lieferbar
+  }
+}
+
+{
+  "id": "000000000000000000000001"
+}
+
+### Suche Produktname von Chips mit nicht-vorhandener Chips-ID
+POST {{graphQlUrl}}
+Content-Type: application/json
+X-REQUEST-TYPE: GraphQL
+
+query ($id: ID! = "999999999999999999999999") {
+  chips(id: $id) {
+    produktname
+  }
+}
+
+{
+  "id": "999999999999999999999999"
+}
+
+### Suche typ von ChipsProdukten mit vorhandenem Produktname
+POST {{graphQlUrl}}
+Content-Type: application/json
+X-REQUEST-TYPE: GraphQL
+
+query ($produktname: String = "Alpha") {
+  chipsProdukte(produktname: $produktname) {
+    typ
+  }
+}
+
+{
+  "produktname": "Alpha"
+}
+
+### Suche produktname, typ und schlagwoerter von ChipsProdukten mit vorhandenem Produktname
+POST {{graphQlUrl}}
+Content-Type: application/json
+X-REQUEST-TYPE: GraphQL
+
+query ($produktname: String = "a") {
+  chipsProdukte(produktname: $produktname) {
+    produktname
+    typ
+    schlagwoerter
+  }
+}
+
+{
+  "produktname": "a"
+}
+
+### Suche art von ChipsProdukten mit NICHT-vorhandenem Produktname
+POST {{graphQlUrl}}
+Content-Type: application/json
+X-REQUEST-TYPE: GraphQL
+
+query ($produktname: String = "Nichtvorhanden") {
+  chipsProdukte(produktname: $produktname) {
+    typ
+  }
+}
+
+{
+  "produktname": "Nichtvorhanden"
+}

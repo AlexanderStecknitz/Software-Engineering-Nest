@@ -1,0 +1,195 @@
+# Copyright (C) 2020 - present Juergen Zimmermann, Hochschule Karlsruhe
+#
+# This program is free software: you can redistribute it and/or modify
+# #it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+# kubectl logs mongodb-0 --namespace acme
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb
+  labels:
+    app: mongodb
+spec:
+  selector:
+    matchLabels:
+      app: mongodb
+  replicas: 1
+  serviceName: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      serviceAccountName: acme-mongodb
+      containers:
+        - image: mongo:5.0.6-focal
+          name: mongo
+          args:
+            # https://docs.mongodb.com/manual/reference/configuration-file-settings-command-line-options-mapping
+            # Default-Werte: /data/db, /var/log/mongodb/mongodb.log
+            # CAVEAT: fuer Transaktionen ist ein ReplicaSet fuer MongoDB (nicht verwechseln mit ReplicaSet in Kubernetes)
+            #         erforderlich und ein solches ReplicaSet erfordert "Keyfile Authentication" mit einem X.509 Zertifikat
+            - --auth
+            - --bind_ip_all
+            - --tlsMode=disabled
+            - --wiredTigerCacheSizeGB=0.3
+
+            #- --replSet=replicaSet
+            #- --oplogSize=900
+
+            #   kubectl exec mongodb-0 --stdin --tty --namespace acme -- bash
+            #     mongo --host localhost --username admin --password p --authenticationDatabase admin --norc --eval "rs.initiate({_id: "replicaSet"})" admin
+            #     mongo mongodb://localhost/admin?replicaSet=replicaSet --username admin --password p --authenticationDatabase admin --norc
+            #       use acme
+            #       db.createCollection("kunde")
+            #       exit
+            #     exit
+
+            #- --logpath=/var/tmp/mongod.log
+            #- --logRotate=rename
+
+          envFrom:
+            - configMapRef:
+                name: mongodb-env
+          env:
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb
+                  key: password
+          ports:
+            - containerPort: 27017
+              name: mongod
+          securityContext:
+            # eingebauten User aus dem Basis-Image nutzen
+            runAsNonRoot: true
+            # mongodb
+            runAsUser: 999
+            runAsGroup: 999
+            # /tmp/mongodb-27017.sock
+            readOnlyRootFilesystem: true
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            exec:
+              # TODO mongosh statt mongo (deprecated)
+              command:
+                - sh
+                - -c
+                - echo
+                - 'db.runCommand("ping").ok'
+                - |
+                # https://docs.mongodb.com/mongodb-shell
+                - mongosh
+                - --username
+                - $MONGO_INITDB_ROOT_USERNAME
+                - --password
+                - $MONGO_INITDB_ROOT_PASSWORD
+                - --authenticationDatabase
+                - admin
+                - --authenticationMechanism
+                # SCRAM = Salted Challenge Response Authentication Mechanism
+                - SCRAM-SHA-256
+                - --host
+                - mongodb-0.mongodb.acme.svc.cluster.local
+                - --norc
+                - --quiet
+                - admin
+            # TCP-Socket oeffnen (und wieder schliessen) statt eines (Shell-) Kommandos:
+            #tcpSocket:
+            #  port: mongodb
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - echo
+                - 'db.runCommand("ping").ok'
+                - |
+                - mongosh
+                - --username
+                - $MONGO_INITDB_ROOT_USERNAME
+                - --password
+                - $MONGO_INITDB_ROOT_PASSWORD
+                - --authenticationDatabase
+                - admin
+                - --authenticationMechanism
+                - SCRAM-SHA-256
+                - --host
+                - mongodb-0.mongodb.acme.svc.cluster.local
+                - --norc
+                - --quiet
+                - admin
+          # https://medium.com/@xcoulon/storing-data-into-persistent-volumes-on-kubernetes-fb155da16666
+          volumeMounts:
+            - mountPath: /data/db
+              name: mongodb-data-volume
+            - mountPath: /tmp
+              name: mongodb-tmp-volume
+            - mountPath: /home/mongodb
+              name: mongodb-home-volume
+      volumes:
+        - name: mongodb-data-volume
+          persistentVolumeClaim:
+            claimName: mongodb-data-volume-mongodb-0
+        - name: mongodb-tmp-volume
+          persistentVolumeClaim:
+            claimName: mongodb-tmp-volume-mongodb-0
+        - name: mongodb-home-volume
+          persistentVolumeClaim:
+            claimName: mongodb-home-volume-mongodb-0
+  # "storage-constraint" fuer "Dynamic Volume Provisioning" https://kubernetes.io/docs/concepts/storage/dynamic-provisioning
+  # BEACHTE: eine eigene YAML-Datei für "Persistent Volume Claim" funktioniert nicht mit Mounting fuer Windows
+  # https://kubernetes.io/blog/2021/12/16/kubernetes-1-23-statefulset-pvc-auto-deletion
+  # https://kubernetes.io/docs/concepts/workloads/controllers/statefulset
+  volumeClaimTemplates:
+    - metadata:
+        name: mongodb-data-volume
+        labels:
+          app: mongodb-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 2Gi
+        # gleicher Name wie beim lokalen PersistentVolume
+        # TODO bei "hostpath" wird der Pfad fuer Windows aus dem PersistentVolume nicht verwendet
+        storageClassName: manual
+    - metadata:
+        name: mongodb-tmp-volume
+        labels:
+          app: mongodb-tmp
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 50Mi
+        storageClassName: manual
+    - metadata:
+        name: mongodb-home-volume
+        labels:
+          app: mongodb-home
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 1Gi
+        storageClassName: manual

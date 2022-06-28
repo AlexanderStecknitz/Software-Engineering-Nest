@@ -1,0 +1,76 @@
+# Copyright (C) 2021 - present Juergen Zimmermann, Hochschule Karlsruhe
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+# Aufruf:   docker compose up
+#           docker compose down
+#
+# evtl.:    docker compose exec mongodb bash
+
+---
+# https://docs.docker.com/compose/compose-file
+# https://docs.docker.com/compose/compose-file/compose-file-v3
+services:
+  mongodb:
+    image: mongo:5.0.6-focal
+    ports:
+      - published: 27017
+        target: 27017
+    volumes:
+      - type: bind
+        source: C:/Zimmermann/volumes/mongodb/db
+        target: /data/db
+      - type: bind
+        source: C:/Zimmermann/volumes/mongodb/tmp
+        target: /tmp
+      - type: bind
+        source: C:/Zimmermann/volumes/mongodb/home
+        target: /home/mongodb
+    env_file: [mongodb.env]
+    container_name: mongodb
+    hostname: mongodb
+    user: mongodb
+    read_only: true
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+    healthcheck:
+      test:
+        - CMD
+        - echo
+        - 'db.runCommand("ping").ok'
+        - |
+        - mongosh
+        - --username
+        - admin
+        - --password
+        - p
+        - --authenticationDatabase
+        - admin
+        - --authenticationMechanism
+        - SCRAM-SHA-256
+        - --host
+        - localhost
+        - --norc
+        - --quiet
+        - admin
+      interval: 5s
+      timeout: 2s
+      start_period: 5s
+      #retries: 3
+    restart: unless-stopped
+
+  # CloudBeaver CE unterstuetzt nur relationale DB-Systeme

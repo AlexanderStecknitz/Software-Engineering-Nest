@@ -1,0 +1,10 @@
+{
+  "produktname": "TestChips",
+  "geschmack": "Onion",
+  "typ": "KARTOFFEL",
+  "bestand": 20,
+  "preis": 11.1,
+  "rabatt": 0.011,
+  "lieferbar": true,
+  "schlagwoerter": ["ONION"]
+}

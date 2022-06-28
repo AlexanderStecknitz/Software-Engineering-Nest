@@ -1,0 +1,7 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`GET /api/:id Chipsprodukt zu vorhandener ID 000000000000000000000001 1`] = `"https://laptop-tiibbsm1:3000/api/000000000000000000000001"`;
+
+exports[`GET /api/:id Chipsprodukt zu vorhandener ID 000000000000000000000002 1`] = `"https://laptop-tiibbsm1:3000/api/000000000000000000000002"`;
+
+exports[`GET /api/:id Chipsprodukt zu vorhandener ID 000000000000000000000003 1`] = `"https://laptop-tiibbsm1:3000/api/000000000000000000000003"`;

@@ -1,0 +1,59 @@
+# siehe app.module.ts
+
+# Funktionen, um Chips zu empfangen
+type Query {
+  chipsProdukte(produktname: String): [Chips]
+
+  chips(id: ID!): Chips
+}
+
+# Funktionen, um Chips anzulegen, zu aktualisieren oder zu loeschen
+type Mutation {
+  create(
+    produktname: String!
+    geschmack: String!
+    typ: Typ!
+    bestand: Int
+    preis: Float
+    rabatt: Float
+    lieferbar: Boolean
+    schlagwoerter: [String]
+  ): String
+
+  update(id: ID, version: Int, chips: ChipsUpdateInput!): Int
+
+  delete(id: ID!): Boolean
+}
+
+# Datenschema eines Chips, das empfangen wird
+type Chips {
+  id: ID
+  version: Int
+  produktname: String
+  geschmack: String
+  typ: Typ
+  bestand: Int
+  preis: Float
+  rabatt: Float
+  lieferbar: Boolean
+  schlagwoerter: [String]
+}
+
+# Enum-Typ fuer den Typ dieses Chips-Produktes.
+enum Typ {
+  KARTOFFEL
+  SUESSKARTOFFEL
+  GEMUESE
+  LINSE
+}
+
+input ChipsUpdateInput {
+  produktname: String!
+  geschmack: String!
+  typ: Typ!
+  bestand: Int
+  preis: Float
+  rabatt: Float
+  lieferbar: Boolean
+  schlagwoerter: [String]
+}

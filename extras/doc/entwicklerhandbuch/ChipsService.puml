@@ -1,0 +1,78 @@
+' Copyright (C) 2019 - present Juergen Zimmermann, Hochschule Karlsruhe
+'
+' This program is free software: you can redistribute it and/or modify
+' it under the terms of the GNU General Public License as published by
+' the Free Software Foundation, either version 3 of the License, or
+' (at your option) any later version.
+'
+' This program is distributed in the hope that it will be useful,
+' but WITHOUT ANY WARRANTY; without even the implied warranty of
+' MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+' GNU General Public License for more details.
+'
+' You should have received a copy of the GNU General Public License
+' along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+' Preview durch <Alt>d
+
+@startuml Anwendungskern
+
+interface Promise<T>
+
+package @nestjs/common {
+  class "function Injectable(): ClassDecorator" as Injectable
+  hide Injectable circle
+}
+
+package mongoose {
+  class FilterQuery
+  hide FilterQuery circle
+}
+
+package mail {
+  class MailService
+}
+
+package chips {
+  package entity {
+    class Chips
+    class ChipsDocument
+
+  }
+
+  package service #DDDDDD {
+    class ChipsInvalid
+    class TitelExists
+    class IsbnExists
+    class VersionInvalid
+    class VersionOutdated
+
+    ChipsService .up.> Promise
+    ChipsService ..> Chips
+    ChipsService ..> ChipsDocument
+    ChipsService .left.> ChipsValidationService
+    ChipsService ..> ChipsInvalid
+    ChipsService ..> ProduktnameExists
+    ChipsService ..> VersionInvalid
+    ChipsService ..> VersionOutdated
+    ChipsService .right.> MailService
+    ChipsService .up.> FilterQuery
+    ChipsService .up.> Injectable
+
+    class ChipsService << control >> <<@Injectable()>> {
+      + async findById(id: string): Promise<ChipsDocument | undefined>
+      + async find(query?: FilterQuery<ChipsDocument>): Promise<ChipsDocument[]>
+      + async create(chips: Chips): Promise<string|ChipsInvalid|ProduktnameExists>
+      + async update(chips: Chips, id: string, version: string): Promise<number|ChipsInvalid|ProduktnameExists|VersionInvalid|VersionOutdated>
+      + async delete(id: string): Promise<boolean>
+    }
+
+    VersionOutdated -[hidden]-> ChipsDocument
+  }
+}
+
+hide empty members
+
+footer (c) Jürgen Zimmermann
+
+@enduml
